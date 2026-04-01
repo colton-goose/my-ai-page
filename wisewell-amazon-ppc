@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wisewell · Amazon.ae PPC Dashboard</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f8f6; color: #1a1a1a; margin: 0; padding: 0; line-height: 1.4; min-height: 100vh; }
+
+/* Top bar */
+.ww-topbar { position: sticky; top: 0; z-index: 100; background: rgba(248,248,246,0.95); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 0.5px solid rgba(0,0,0,0.1); padding: 10px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.ww-topbar-title { font-size: 13px; font-weight: 500; color: #1a1a1a; margin: 0; }
+.ww-topbar-sub   { font-size: 10px; color: #9ca3af; margin: 0; }
+.ww-upload-btn   { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #1a1a1a; background: #fff; border: 0.5px solid rgba(0,0,0,0.2); border-radius: 6px; padding: 6px 12px; cursor: pointer; transition: background 0.12s; white-space: nowrap; user-select: none; }
+.ww-upload-btn:hover { background: #f0efea; }
+#csv-input { display: none; }
+
+/* Drop overlay */
+.ww-drop { display: none; position: fixed; inset: 0; background: rgba(29,158,117,0.05); border: 2px dashed rgba(29,158,117,0.45); z-index: 999; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: #0F6E56; pointer-events: none; }
+.ww-drop.active { display: flex; }
+
+/* Empty state */
+.ww-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 57px); padding: 40px 24px; text-align: center; }
+.ww-empty-icon { width: 52px; height: 52px; background: #f0efea; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; }
+.ww-empty-cta  { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: #1a1a1a; background: #fff; border: 0.5px solid rgba(0,0,0,0.2); border-radius: 7px; padding: 9px 20px; cursor: pointer; transition: background 0.12s; user-select: none; }
+.ww-empty-cta:hover { background: #f0efea; }
+
+/* Dashboard */
+.ww-wrap { max-width: 960px; margin: 0 auto; padding: 20px 24px 48px; }
+
+/* KPI cards */
+.ww-g4 { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.ww-kpi { background: #f0efea; border-radius: 8px; padding: .9rem 1rem; }
+.ww-kpi p { margin: 0; line-height: 1.3; }
+
+/* Period selector */
+.period-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.period-lbl { font-size: 10px; color: #9ca3af; white-space: nowrap; }
+.period-grp { display: flex; background: #f0efea; border-radius: 6px; padding: 2px; gap: 2px; overflow-x: auto; flex-shrink: 0; }
+.period-btn { font-size: 11px; font-weight: 500; color: #6b7280; background: transparent; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+.period-btn:hover { background: rgba(0,0,0,0.05); color: #1a1a1a; }
+.period-btn.active { background: #fff; color: #1a1a1a; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+/* Chart card */
+.ww-card { background: #fff; border: 0.5px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 1.1rem 1.25rem; margin-bottom: .9rem; }
+.ww-leg  { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; }
+.ww-li   { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; }
+
+@media (max-width: 620px) {
+  .ww-g4   { grid-template-columns: repeat(2,1fr); }
+  .ww-wrap { padding: 16px 16px 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="ww-topbar">
+  <div>
+    <p class="ww-topbar-title">Wisewell &middot; Amazon.ae PPC Dashboard</p>
+    <p class="ww-topbar-sub" id="topbar-status">No data loaded &mdash; upload a CSV to begin</p>
+  </div>
+  <label for="csv-input" class="ww-upload-btn" id="topbar-btn" style="display:none">
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M6.5 1v7.5M4 3.5 6.5 1 9 3.5M1.5 9.5v1.25c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75V9.5" stroke="#1a1a1a" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Upload CSV
+  </label>
+  <input type="file" id="csv-input" accept=".csv">
+</div>
+
+<!-- Drop overlay -->
+<div class="ww-drop" id="drop-overlay" aria-hidden="true">Drop CSV to update dashboard</div>
+
+<!-- Empty state -->
+<div class="ww-empty" id="empty-state">
+  <div class="ww-empty-icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2v14M8 6l4-4 4 4M3 18v1.5A1.5 1.5 0 0 0 4.5 21h15a1.5 1.5 0 0 0 1.5-1.5V18" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <p style="font-size:15px;font-weight:500;color:#1a1a1a;margin:0 0 6px">Upload your week-over-week CSV</p>
+  <p style="font-size:12px;color:#9ca3af;margin:0 0 24px;max-width:380px;line-height:1.6">Drag and drop the Wisewell PPC Week-over-Week Summary CSV anywhere on this page, or click below. Everything renders in your browser &mdash; no data is sent anywhere.</p>
+  <label for="csv-input" class="ww-empty-cta">
+    <svg width="14" height="14" viewBox="0 0 13 13" fill="none" aria-hidden="true"><path d="M6.5 1v7.5M4 3.5 6.5 1 9 3.5M1.5 9.5v1.25c0 .414.336.75.75.75h8.5a.75.75 0 0 0 .75-.75V9.5" stroke="#1a1a1a" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Select file
+  </label>
+  <p style="font-size:10px;color:#c4c4c0;margin:16px 0 0">Accepts Wisewell_PPC_-_Week_over_Week_-_Summary.csv</p>
+</div>
+
+<!-- Dashboard (revealed on upload) -->
+<div id="dashboard" style="display:none">
+<div class="ww-wrap">
+
+  <div style="margin-bottom:1.25rem">
+    <p style="margin:0 0 2px;font-size:15px;font-weight:500;color:#1a1a1a">Wisewell &middot; Amazon.ae PPC Performance</p>
+    <p style="margin:0;font-size:11px;color:#9ca3af" id="dash-subtitle"></p>
+  </div>
+
+  <!-- KPI cards — always reflect lifetime totals, unaffected by period selector -->
+  <div class="ww-g4">
+    <div class="ww-kpi"><p style="font-size:10px;color:#6b7280;margin-bottom:5px">Total revenue</p><p style="font-size:19px;font-weight:500;color:#1D9E75" id="kpi-rev">&mdash;</p><p style="font-size:10px;color:#9ca3af;margin-top:3px">ads + organic &middot; lifetime</p></div>
+    <div class="ww-kpi"><p style="font-size:10px;color:#6b7280;margin-bottom:5px">PPC investment</p><p style="font-size:19px;font-weight:500;color:#EF9F27" id="kpi-spend">&mdash;</p><p style="font-size:10px;color:#9ca3af;margin-top:3px" id="kpi-ppc-sub">&mdash;</p></div>
+    <div class="ww-kpi"><p style="font-size:10px;color:#6b7280;margin-bottom:5px">Lifetime TACoS</p><p style="font-size:19px;font-weight:500;color:#7F77DD" id="kpi-tacos">&mdash;</p><p style="font-size:10px;color:#9ca3af;margin-top:3px" id="kpi-acos-sub">&mdash;</p></div>
+    <div class="ww-kpi"><p style="font-size:10px;color:#6b7280;margin-bottom:5px">Total orders</p><p style="font-size:19px;font-weight:500;color:#1a1a1a" id="kpi-orders">&mdash;</p><p style="font-size:10px;color:#9ca3af;margin-top:3px" id="kpi-orders-sub">&mdash;</p></div>
+  </div>
+
+  <!-- Period selector -->
+  <div class="period-bar">
+    <span class="period-lbl">View by</span>
+    <div class="period-grp">
+      <button class="period-btn active" data-p="weekly">Weekly</button>
+      <button class="period-btn" data-p="2week">2-Week</button>
+      <button class="period-btn" data-p="4week">4-Week</button>
+      <button class="period-btn" data-p="monthly">Monthly</button>
+      <button class="period-btn" data-p="quarterly">Quarterly</button>
+      <button class="period-btn" data-p="all">All Time</button>
+    </div>
+    <span style="font-size:10px;color:#c4c4c0" id="period-note"></span>
+  </div>
+
+  <!-- Phase strip (weekly view only) -->
+  <div id="phase-section" style="margin-bottom:1.25rem;display:none">
+    <p style="font-size:10px;color:#9ca3af;margin:0 0 5px">Management phases</p>
+    <div style="display:flex;border-radius:8px;overflow:hidden;height:26px" id="phase-strip"></div>
+    <div style="display:flex;justify-content:space-between;font-size:8.5px;color:#9ca3af;margin-top:4px;padding:0 1px" id="phase-labels"></div>
+  </div>
+
+  <!-- Chart 1: Revenue + Spend -->
+  <div class="ww-card">
+    <p style="margin:0 0 8px;font-size:12px;font-weight:500;color:#6b7280" id="rev-title">Revenue and PPC investment</p>
+    <div class="ww-leg">
+      <span class="ww-li"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#1D9E75"></span>Total revenue &middot; AED &middot; left axis</span>
+      <span class="ww-li"><span style="display:inline-block;width:14px;height:3px;border-radius:2px;background:#EF9F27"></span>PPC spend &middot; AED &middot; right axis</span>
+      <span class="ww-li"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(159,225,203,0.85)"></span>PPC-attributed sales</span>
+    </div>
+    <div style="position:relative;width:100%;height:270px"><canvas id="wwRevChart"></canvas></div>
+  </div>
+
+  <!-- Chart 2: ACoS / TACoS -->
+  <div class="ww-card">
+    <p style="margin:0 0 8px;font-size:12px;font-weight:500;color:#6b7280" id="eff-title">ACoS and TACoS &mdash; efficiency</p>
+    <div class="ww-leg">
+      <span class="ww-li"><span style="display:inline-block;width:14px;height:3px;border-radius:2px;background:#E24B4A"></span>ACoS &middot; PPC only</span>
+      <span class="ww-li"><span style="display:inline-block;width:14px;height:3px;border-radius:2px;background:#7F77DD"></span>TACoS &middot; total account</span>
+      <span class="ww-li" style="gap:4px"><span style="display:inline-block;width:14px;height:0;border-top:1.5px dashed rgba(226,75,74,0.5);vertical-align:middle"></span>20% target</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px"><canvas id="wwEffChart"></canvas></div>
+    <p style="font-size:10px;color:#9ca3af;margin:7px 0 0" id="eff-note"></p>
+  </div>
+
+  <!-- Chart 3: Impressions / CTR -->
+  <div class="ww-card">
+    <p style="margin:0 0 8px;font-size:12px;font-weight:500;color:#6b7280" id="vol-title">Impressions and click-through rate</p>
+    <div class="ww-leg">
+      <span class="ww-li"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(55,138,221,0.7)"></span>Impressions &middot; thousands &middot; left axis</span>
+      <span class="ww-li"><span style="display:inline-block;width:14px;height:3px;border-radius:2px;background:#BA7517"></span>CTR % &middot; right axis</span>
+    </div>
+    <div style="position:relative;width:100%;height:200px"><canvas id="wwVolChart"></canvas></div>
+    <p style="font-size:10px;color:#9ca3af;margin:7px 0 0" id="vol-note"></p>
+  </div>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════════════════════
+//  TOOL CONFIGURATION  —  only hardcoded items in this file
+//  No campaign data, no metrics, no defaults live here.
+// ════════════════════════════════════════════════════════════════════════════
+
+// Phase strip definitions — edit as the account evolves.
+// from/to are WK numbers (1-indexed). to:9999 = "open ended".
+const PHASES = [
+  { label:'Launch',            from:1,  to:2,    bg:'#E1F5EE', color:'#0F6E56', band:'rgba(29,158,117,0.07)'  },
+  { label:'Discovery',         from:3,  to:7,    bg:'#FAEEDA', color:'#854F0B', band:'rgba(239,159,39,0.07)'  },
+  { label:'Organic lift',      from:8,  to:10,   bg:'#E6F1FB', color:'#185FA5', band:'rgba(55,138,221,0.07)'  },
+  { label:'Stabilization',     from:11, to:17,   bg:'#EAF3DE', color:'#3B6D11', band:'rgba(99,153,34,0.06)'   },
+  { label:'Dec/Jan headwinds', from:18, to:25,   bg:'#FAECE7', color:'#993C1D', band:'rgba(216,90,48,0.09)'   },
+  { label:'Recovery',          from:26, to:31,   bg:'#EEEDFE', color:'#534AB7', band:'rgba(127,119,221,0.07)' },
+  { label:'Active',            from:32, to:9999, bg:'#F1EFE8', color:'#5F5E5A', band:'rgba(136,135,128,0.05)' },
+];
+
+const PERIOD_NOTES = {
+  weekly:    'One bar per managed week \u2014 finest granularity available (data is weekly)',
+  '2week':   'Each bar = 2 consecutive weeks, aggregated',
+  '4week':   'Each bar = 4 consecutive weeks (\u223c1 month), aggregated',
+  monthly:   'Grouped by calendar month (based on week start date)',
+  quarterly: 'Grouped by calendar quarter',
+  all:       'Single aggregated bar spanning the full managed period',
+};
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  RUNTIME STATE
+// ════════════════════════════════════════════════════════════════════════════
+let rawRows      = null;
+let activePeriod = 'weekly';
+let charts       = {};
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CSV PARSER
+//
+//  Expects the standard Wisewell Week-over-Week Summary export.
+//  Skips the totals row, finds the header row by "WK #", stops at any
+//  row whose Week Start date is in the future.
+//
+//  Parsed row schema (index → field):
+//   0  wkNum        int
+//   1  wkStart      string  MM/DD/YYYY
+//   2  wkEnd        string  MM/DD/YYYY
+//   3  ppcSpendAED  float|null
+//   4  ppcSalesAED  float|null
+//   5  ppcOrders    float|null
+//   6  impressions  float|null
+//   7  clicks       float|null
+//   8  ctrPct       float|null
+//   9  acosPct      float|null
+//  10  totalOrders  float|null
+//  11  totalRevAED  float|null
+//  12  tacosPct     float|null
+// ════════════════════════════════════════════════════════════════════════════
+function splitCSVLine(line) {
+  const out = []; let field = '', inQ = false;
+  for (const c of line) {
+    if (c === '"')             { inQ = !inQ; }
+    else if (c === ',' && !inQ){ out.push(field.trim()); field = ''; }
+    else                       { field += c; }
+  }
+  out.push(field.trim());
+  return out;
+}
+
+function numOrNull(s) {
+  if (!s || s === '-' || !s.trim()) return null;
+  const n = parseFloat(s.replace(/[$,%]/g, '').replace(/,/g, ''));
+  return isNaN(n) ? null : n;
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('/');
+  return p.length === 3 ? new Date(+p[2], +p[0] - 1, +p[1]) : null;
+}
+
+function csvToRows(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  const hIdx  = lines.findIndex(l => l.includes('WK #'));
+  if (hIdx === -1) return null;
+
+  const cutoff = new Date(); cutoff.setHours(23, 59, 59, 999);
+  const rows   = [];
+
+  for (let i = hIdx + 1; i < lines.length; i++) {
+    const c  = splitCSVLine(lines[i]);
+    const wk = parseInt(c[0]);
+    if (!c[1] || isNaN(wk)) continue;
+    const d = parseDate(c[1]);
+    if (!d || d > cutoff) break;
+
+    rows.push([
+      wk, c[1], c[2],
+      numOrNull(c[3]),   // col 3  ppcSpendAED
+      numOrNull(c[4]),   // col 4  ppcSalesAED
+      numOrNull(c[7]),   // col 7  ppcOrders
+      numOrNull(c[8]),   // col 8  impressions
+      numOrNull(c[9]),   // col 9  clicks
+      numOrNull(c[10]),  // col 10 ctr%
+      numOrNull(c[15]),  // col 15 acos%
+      numOrNull(c[17]),  // col 17 totalOrders
+      numOrNull(c[18]),  // col 18 totalRevAED
+      numOrNull(c[20]),  // col 20 tacos%
+    ]);
+  }
+  return rows.length ? rows : null;
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  AGGREGATION
+//
+//  Rate metrics (ACoS, TACoS, CTR) are always recalculated from summed
+//  numerators and denominators — never averaged — so they stay accurate
+//  at any level of granularity.
+// ════════════════════════════════════════════════════════════════════════════
+const sumCol = (rows, idx) => rows.reduce((a, r) => a + (r[idx] || 0), 0);
+
+function collapseGroup(label, rows) {
+  const spend    = sumCol(rows, 3);
+  const ppcSales = sumCol(rows, 4);
+  const ppcOrd   = sumCol(rows, 5);
+  const imp      = sumCol(rows, 6);
+  const clicks   = sumCol(rows, 7);
+  const totOrd   = sumCol(rows, 10);
+  const totRev   = sumCol(rows, 11);
+  return {
+    label,
+    spend, ppcSales, ppcOrd, imp, clicks, totOrd, totRev,
+    acos:  ppcSales > 0 ? spend / ppcSales * 100 : null,
+    tacos: totRev   > 0 ? spend / totRev   * 100 : null,
+    ctr:   imp      > 0 ? clicks / imp     * 100 : null,
+    impK:  Math.round(imp / 100) / 10,
+  };
+}
+
+function aggregate(rows, period) {
+  const groups = [];
+
+  if (period === 'weekly') {
+    rows.forEach(r => groups.push({ label: `WK${r[0]}`, rows: [r] }));
+
+  } else if (period === '2week' || period === '4week') {
+    const size = period === '2week' ? 2 : 4;
+    for (let i = 0; i < rows.length; i += size) {
+      const chunk = rows.slice(i, Math.min(i + size, rows.length));
+      const f = chunk[0][0], l = chunk[chunk.length - 1][0];
+      groups.push({ label: f === l ? `WK${f}` : `WK${f}\u2013${l}`, rows: chunk });
+    }
+
+  } else if (period === 'monthly') {
+    const map = new Map();
+    rows.forEach(r => {
+      const d = parseDate(r[1]);
+      const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}`;
+      if (!map.has(key)) {
+        const mo = d.toLocaleString('en-US', { month: 'short' });
+        const yr = String(d.getFullYear()).slice(2);
+        map.set(key, { label: `${mo} '${yr}`, rows: [] });
+      }
+      map.get(key).rows.push(r);
+    });
+    groups.push(...map.values());
+
+  } else if (period === 'quarterly') {
+    const map = new Map();
+    rows.forEach(r => {
+      const d   = parseDate(r[1]);
+      const q   = Math.floor(d.getMonth() / 3) + 1;
+      const yr  = String(d.getFullYear()).slice(2);
+      const key = `${d.getFullYear()}-Q${q}`;
+      if (!map.has(key)) map.set(key, { label: `Q${q} '${yr}`, rows: [] });
+      map.get(key).rows.push(r);
+    });
+    groups.push(...map.values());
+
+  } else { // all
+    groups.push({ label: 'All time', rows });
+  }
+
+  return groups.map(g => collapseGroup(g.label, g.rows));
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  KPI  (always computed from the full raw dataset)
+// ════════════════════════════════════════════════════════════════════════════
+function computeKPIs(rows) {
+  const rev      = sumCol(rows, 11);
+  const spend    = sumCol(rows, 3);
+  const ppcSales = sumCol(rows, 4);
+  const orders   = sumCol(rows, 10);
+  const ppcOrd   = sumCol(rows, 5);
+  return { rev, spend, ppcSales, orders, ppcOrd,
+    tacos: rev      > 0 ? spend / rev      * 100 : 0,
+    acos:  ppcSales > 0 ? spend / ppcSales * 100 : 0 };
+}
+
+const fmtAED = n => 'AED ' + Math.round(n).toLocaleString();
+const fmtPct = n => n.toFixed(1) + '%';
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PHASE STRIP  (weekly view only)
+// ════════════════════════════════════════════════════════════════════════════
+function buildPhaseStrip(totalWks) {
+  const strip = document.getElementById('phase-strip');
+  const lbl   = document.getElementById('phase-labels');
+  strip.innerHTML = ''; lbl.innerHTML = '';
+
+  const labelWks = [1];
+  PHASES.forEach((ph, idx) => {
+    const from = Math.max(ph.from, 1);
+    const to   = Math.min(ph.to, totalWks);
+    if (from > totalWks) return;
+    const pct = ((to - from + 1) / totalWks * 100).toFixed(2);
+    const div = document.createElement('div');
+    div.style.cssText = `width:${pct}%;background:${ph.bg};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:500;color:${ph.color};overflow:hidden;padding:0 3px;white-space:nowrap;${idx < PHASES.length - 1 ? 'border-right:1.5px solid #f8f8f6;' : ''}`;
+    div.textContent = ph.label;
+    strip.appendChild(div);
+    if (ph.from > 1 && ph.from <= totalWks) labelWks.push(ph.from);
+  });
+  labelWks.push(totalWks);
+  [...new Set(labelWks)].sort((a, b) => a - b).forEach(wk => {
+    const sp = document.createElement('span');
+    sp.textContent = `WK${wk}`;
+    lbl.appendChild(sp);
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CHART PLUGINS
+// ════════════════════════════════════════════════════════════════════════════
+
+function makePhaseBgPlugin(n) {
+  return { id: 'phaseBg', beforeDraw(chart) {
+    const { ctx, chartArea: ca, scales: { x } } = chart;
+    if (!ca) return;
+    PHASES.forEach(ph => {
+      const f = Math.max(ph.from - 1, 0) - 0.5;
+      const t = Math.min(ph.to  - 1, n - 1) + 0.5;
+      if (f >= n) return;
+      ctx.save();
+      ctx.fillStyle = ph.band;
+      ctx.fillRect(x.getPixelForValue(f), ca.top, x.getPixelForValue(t) - x.getPixelForValue(f), ca.bottom - ca.top);
+      ctx.restore();
+    });
+  }};
+}
+
+function makeBestPlugin(idx, label) {
+  return { id: 'bestPeriod', afterDraw(chart) {
+    const { ctx, chartArea: ca, scales: { x } } = chart;
+    if (!ca) return;
+    const px = x.getPixelForValue(idx);
+    ctx.save();
+    ctx.fillStyle = '#0F6E56';
+    ctx.beginPath();
+    ctx.moveTo(px, ca.top + 8); ctx.lineTo(px - 4, ca.top); ctx.lineTo(px + 4, ca.top);
+    ctx.closePath(); ctx.fill();
+    ctx.font = '500 9px -apple-system,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, px, ca.top + 20);
+    ctx.restore();
+  }};
+}
+
+const targetLinePlugin = { id: 'targetLine', afterDraw(chart) {
+  const { ctx, chartArea: ca, scales: { y } } = chart;
+  if (!ca) return;
+  const py = y.getPixelForValue(20);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(226,75,74,0.4)'; ctx.lineWidth = 1; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(ca.left, py); ctx.lineTo(ca.right, py); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.font = '9px -apple-system,sans-serif';
+  ctx.fillStyle = 'rgba(226,75,74,0.6)'; ctx.textAlign = 'right';
+  ctx.fillText('20% target', ca.right - 4, py - 3);
+  ctx.restore();
+}};
+
+function makeEffAnnotPlugin(tacosArr) {
+  let bIdx = -1, bVal = Infinity;
+  tacosArr.forEach((v, i) => { if (v !== null && v > 0 && v < bVal) { bVal = v; bIdx = i; } });
+  return { id: 'effAnnot', afterDraw(chart) {
+    if (bIdx < 0) return;
+    const { ctx, chartArea: ca, scales: { x, y } } = chart;
+    if (!ca) return;
+    const px = x.getPixelForValue(bIdx), py = y.getPixelForValue(bVal);
+    const onLeft = bIdx < tacosArr.length / 2;
+    ctx.save();
+    ctx.font = '500 9px -apple-system,sans-serif';
+    ctx.fillStyle = '#7F77DD'; ctx.textAlign = onLeft ? 'left' : 'right';
+    ctx.fillText(`${bVal.toFixed(1)}% TACoS`, px + (onLeft ? 7 : -7), py - 6);
+    ctx.beginPath(); ctx.arc(px, py, 3.5, 0, 2 * Math.PI); ctx.fill();
+    ctx.restore();
+  }};
+}
+
+function makeCtrAnnotPlugin(ctrArr) {
+  let mIdx = 0, mVal = 0;
+  ctrArr.forEach((v, i) => { if (v !== null && v > mVal) { mVal = v; mIdx = i; } });
+  return { id: 'ctrAnnot', afterDraw(chart) {
+    const { ctx, chartArea: ca, scales: { x, y2 } } = chart;
+    if (!ca) return;
+    const px = x.getPixelForValue(mIdx), py = y2.getPixelForValue(mVal);
+    ctx.save();
+    ctx.font = '500 9px -apple-system,sans-serif';
+    ctx.fillStyle = '#BA7517'; ctx.textAlign = 'center';
+    ctx.fillText(`CTR ${mVal.toFixed(2)}%`, px, py - 8);
+    ctx.restore();
+  }};
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CHART RENDER
+// ════════════════════════════════════════════════════════════════════════════
+function destroyCharts() { Object.values(charts).forEach(c => c && c.destroy()); charts = {}; }
+
+function renderCharts(agg, period) {
+  destroyCharts();
+
+  const labels    = agg.map(g => g.label);
+  const totRevArr = agg.map(g => g.totRev);
+  const ppcSArr   = agg.map(g => g.ppcSales);
+  const spendArr  = agg.map(g => g.spend);
+  const acosArr   = agg.map(g => g.acos);
+  const tacosArr  = agg.map(g => g.tacos);
+  const impArr    = agg.map(g => g.impK);
+  const ctrArr    = agg.map(g => g.ctr);
+  const n         = agg.length;
+
+  const bestRevIdx = totRevArr.reduce((b, v, i) => v > totRevArr[b] ? i : b, 0);
+  const maxRev     = Math.max(...totRevArr, 1);
+  const maxSpend   = Math.max(...spendArr, 1);
+  const maxCtr     = Math.max(...ctrArr.map(v => v || 0), 1);
+
+  const isWeekly   = period === 'weekly';
+  const ptR        = n <= 4 ? 6 : n <= 12 ? 4 : 3;
+  const maxTicksX  = 18;
+  const rotX       = (period === 'quarterly' || period === 'all') ? 0 : 45;
+
+  const phasePlug  = isWeekly ? makePhaseBgPlugin(n) : null;
+  const plugsRev   = [phasePlug, makeBestPlugin(bestRevIdx, isWeekly ? 'Best week' : 'Best period')].filter(Boolean);
+  const plugsEff   = [phasePlug, targetLinePlugin, makeEffAnnotPlugin(tacosArr)].filter(Boolean);
+  const plugsVol   = [phasePlug, makeCtrAnnotPlugin(ctrArr)].filter(Boolean);
+
+  const baseX = { font: { size: 9 }, color: '#888780', maxRotation: rotX, autoSkip: true, maxTicksLimit: maxTicksX };
+  const baseG = { color: 'rgba(136,135,128,0.15)', lineWidth: 0.5 };
+  const ttB   = { backgroundColor: 'rgba(20,20,30,0.92)', titleColor: '#e2e8f0', bodyColor: '#94a3b8', padding: 10, borderWidth: 0 };
+
+  // Revenue chart
+  charts.rev = new Chart(document.getElementById('wwRevChart'), {
+    type: 'bar', plugins: plugsRev,
+    data: { labels, datasets: [
+      { label: 'Total revenue (AED)',        data: totRevArr, backgroundColor: 'rgba(29,158,117,0.8)',   hoverBackgroundColor: '#1D9E75',               borderRadius: 2, borderSkipped: false, order: 3, yAxisID: 'y'  },
+      { label: 'PPC-attributed sales (AED)', data: ppcSArr,   backgroundColor: 'rgba(159,225,203,0.55)', hoverBackgroundColor: 'rgba(159,225,203,0.85)', borderRadius: 2, borderSkipped: false, order: 2, yAxisID: 'y'  },
+      { label: 'PPC spend (AED)', data: spendArr, type: 'line', borderColor: '#EF9F27', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: Math.max(ptR - 1, 2), pointHoverRadius: 5, pointBackgroundColor: '#EF9F27', borderWidth: 2, order: 1, yAxisID: 'y2' },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...ttB, callbacks: { label: ctx => ` ${ctx.dataset.label}: AED ${Math.round(ctx.raw).toLocaleString()}` } } },
+      scales: {
+        x:  { ticks: baseX, grid: { display: false }, border: { display: false } },
+        y:  { position: 'left',  ticks: { font: { size: 9 }, color: '#1D9E75', callback: v => v === 0 ? '0' : `${Math.round(v / 1000)}k` }, grid: baseG, border: { display: false }, min: 0, suggestedMax: Math.ceil(maxRev * 1.2 / 1000) * 1000, title: { display: true, text: 'Revenue (AED)', font: { size: 9 }, color: '#1D9E75' } },
+        y2: { position: 'right', ticks: { font: { size: 9 }, color: '#EF9F27', callback: v => `${Math.round(v)}` },                         grid: { display: false },             border: { display: false }, min: 0, max: Math.ceil(maxSpend * 1.4 / 100) * 100, title: { display: true, text: 'Spend (AED)',   font: { size: 9 }, color: '#EF9F27' } },
+      },
+    },
+  });
+
+  // Efficiency chart
+  // spanGaps:false = break the line on null (used for weekly view to show zero-revenue gaps visually)
+  // spanGaps:true  = connect through nulls (for aggregated views, gaps are rare and less meaningful)
+  const spanG = !isWeekly;
+  charts.eff = new Chart(document.getElementById('wwEffChart'), {
+    type: 'line', plugins: plugsEff,
+    data: { labels, datasets: [
+      { label: 'ACoS',  data: acosArr,  borderColor: '#E24B4A', backgroundColor: 'transparent',           fill: false, tension: 0.3, spanGaps: spanG, pointRadius: ptR, pointHoverRadius: 5, pointBackgroundColor: '#E24B4A', borderWidth: 2 },
+      { label: 'TACoS', data: tacosArr, borderColor: '#7F77DD', backgroundColor: 'rgba(127,119,221,0.08)', fill: true,  tension: 0.3, spanGaps: spanG, pointRadius: ptR, pointHoverRadius: 5, pointBackgroundColor: '#7F77DD', borderWidth: 2 },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...ttB, callbacks: { label: ctx => ctx.raw != null ? ` ${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%` : null, filter: item => item.raw != null } } },
+      scales: {
+        x: { ticks: baseX, grid: { display: false }, border: { display: false } },
+        y: { ticks: { font: { size: 9 }, color: '#888780', callback: v => `${v}%` }, grid: baseG, border: { display: false }, min: 0, suggestedMax: 90 },
+      },
+    },
+  });
+
+  // Volume chart
+  charts.vol = new Chart(document.getElementById('wwVolChart'), {
+    type: 'bar', plugins: plugsVol,
+    data: { labels, datasets: [
+      { label: 'Impressions', data: impArr, backgroundColor: 'rgba(55,138,221,0.6)', hoverBackgroundColor: 'rgba(55,138,221,0.85)', borderRadius: 2, order: 2, yAxisID: 'y'  },
+      { label: 'CTR %',       data: ctrArr, type: 'line', borderColor: '#BA7517', backgroundColor: 'transparent', fill: false, tension: 0.35, pointRadius: Math.max(ptR - 1, 2), pointHoverRadius: 4, pointBackgroundColor: '#BA7517', borderWidth: 2, order: 1, yAxisID: 'y2' },
+    ]},
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { ...ttB, callbacks: { label: ctx => ctx.dataset.label === 'CTR %' ? ` CTR: ${ctx.raw != null ? ctx.raw.toFixed(2) : '\u2014'}%` : ` Impressions: ${ctx.raw != null ? ctx.raw.toFixed(1) : '\u2014'}k` } } },
+      scales: {
+        x:  { ticks: baseX, grid: { display: false }, border: { display: false } },
+        y:  { position: 'left',  ticks: { font: { size: 9 }, color: '#378ADD', callback: v => `${v}k` }, grid: baseG, border: { display: false }, min: 0, title: { display: true, text: 'Impressions (k)', font: { size: 9 }, color: '#378ADD' } },
+        y2: { position: 'right', ticks: { font: { size: 9 }, color: '#BA7517', callback: v => `${v.toFixed(1)}%` }, grid: { display: false }, border: { display: false }, min: 0, max: Math.ceil(maxCtr * 1.6 * 10) / 10, title: { display: true, text: 'CTR %', font: { size: 9 }, color: '#BA7517' } },
+      },
+    },
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FULL RENDER  (KPIs are always lifetime; charts reflect the selected period)
+// ════════════════════════════════════════════════════════════════════════════
+function renderAll(rows, period) {
+  const n       = rows.length;
+  const lastWk  = rows[n - 1][0];
+  const lastEnd = parseDate(rows[n - 1][2]);
+  const partial = lastEnd && lastEnd > new Date() ? ` \u00b7 WK${lastWk} in progress` : '';
+
+  document.getElementById('dash-subtitle').textContent =
+    `WK${rows[0][0]}\u2013WK${lastWk} \u00b7 ${rows[0][1]} \u2013 ${rows[n-1][2]} \u00b7 ${n} weeks managed${partial}`;
+
+  const k = computeKPIs(rows);
+  document.getElementById('kpi-rev').textContent        = fmtAED(k.rev);
+  document.getElementById('kpi-spend').textContent      = fmtAED(k.spend);
+  document.getElementById('kpi-ppc-sub').textContent    = fmtAED(k.ppcSales) + ' PPC-attributed';
+  document.getElementById('kpi-tacos').textContent      = fmtPct(k.tacos);
+  document.getElementById('kpi-acos-sub').textContent   = 'PPC ACoS ' + fmtPct(k.acos) + ' isolated';
+  document.getElementById('kpi-orders').textContent     = Math.round(k.orders);
+  document.getElementById('kpi-orders-sub').textContent = `${Math.round(k.ppcOrd)} PPC \u00b7 ${Math.round(k.orders - k.ppcOrd)} organic`;
+
+  // Phase strip visibility
+  const phSec = document.getElementById('phase-section');
+  if (period === 'weekly') { buildPhaseStrip(n); phSec.style.display = 'block'; }
+  else                     { phSec.style.display = 'none'; }
+
+  // Period note
+  document.getElementById('period-note').textContent = PERIOD_NOTES[period] || '';
+
+  // Dynamic chart sub-notes
+  const isWeekly = period === 'weekly';
+  document.getElementById('eff-note').textContent = isWeekly
+    ? 'Gaps indicate weeks with zero revenue (ACoS is undefined). TACoS includes organic orders.'
+    : 'All metrics recalculated from aggregated totals \u2014 not averaged. TACoS includes organic.';
+  document.getElementById('vol-note').textContent = isWeekly
+    ? 'Rising CTR on stable or declining impressions signals improving targeting precision.'
+    : 'CTR = total clicks \u00f7 total impressions across each aggregated period.';
+
+  // Dynamic chart titles
+  const periodLabel = { weekly:'by week', '2week':'by 2-week block', '4week':'by 4-week block', monthly:'by month', quarterly:'by quarter', all:'\u2014 all time' };
+  const sfx = periodLabel[period] || '';
+  document.getElementById('rev-title').textContent = `Revenue and PPC investment ${sfx}`;
+  document.getElementById('eff-title').textContent = `ACoS and TACoS efficiency ${sfx}`;
+  document.getElementById('vol-title').textContent = `Impressions and click-through rate ${sfx}`;
+
+  renderCharts(aggregate(rows, period), period);
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PERIOD SELECTOR EVENT
+// ════════════════════════════════════════════════════════════════════════════
+document.querySelectorAll('.period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!rawRows) return;
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activePeriod = btn.dataset.p;
+    renderAll(rawRows, activePeriod);
+  });
+});
+
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ════════════════════════════════════════════════════════════════════════════
+function handleFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const rows = csvToRows(ev.target.result);
+    if (!rows) {
+      alert('Could not parse the CSV.\n\nMake sure this is the Wisewell Week-over-Week Summary CSV. The tool looks for a header row containing "WK #".');
+      return;
+    }
+    rawRows = rows;
+
+    document.getElementById('empty-state').style.display = 'none';
+    document.getElementById('dashboard').style.display   = 'block';
+    document.getElementById('topbar-btn').style.display  = 'flex';
+
+    activePeriod = 'weekly';
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-p="weekly"]').classList.add('active');
+
+    renderAll(rawRows, 'weekly');
+
+    const t = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('topbar-status').textContent = `${file.name} \u00b7 loaded ${t}`;
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById('csv-input').addEventListener('change', function () {
+  handleFile(this.files[0]);
+  this.value = '';
+});
+
+// Drag and drop
+const dropOverlay = document.getElementById('drop-overlay');
+let dragCount = 0;
+document.addEventListener('dragenter', ()       => { dragCount++; dropOverlay.classList.add('active'); });
+document.addEventListener('dragleave', ()       => { if (--dragCount === 0) dropOverlay.classList.remove('active'); });
+document.addEventListener('dragover',  e        => e.preventDefault());
+document.addEventListener('drop',      e        => {
+  e.preventDefault();
+  dragCount = 0;
+  dropOverlay.classList.remove('active');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.csv')) { alert('Please drop a .csv file.'); return; }
+  handleFile(file);
+});
+</script>
+</body>
+</html>
