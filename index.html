@@ -18,8 +18,6 @@
   --faint:    #c4c4c0;
   --green:    #1D9E75;
   --orange:   #EF9F27;
-  --purple:   #7F77DD;
-  --blue:     #378ADD;
 }
 
 body {
@@ -95,21 +93,14 @@ body {
   margin: 0 auto;
   padding: 0 28px 80px;
 }
-.section-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin: 0 0 14px;
-  padding-bottom: 10px;
-  border-bottom: 0.5px solid var(--border);
-}
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
   margin-bottom: 48px;
+}
+@media (max-width: 600px) {
+  .tools-grid { grid-template-columns: 1fr; }
 }
 
 /* ── Tool card ── */
@@ -231,12 +222,11 @@ body {
 <div class="hero">
   <p class="hero-label">Tools &amp; Dashboards</p>
   <h1 class="hero-title">Built for the accounts.<br><strong>Not for everyone.</strong></h1>
-  <p class="hero-sub">Client-specific analytics, keyword tools, and lookup utilities. Everything runs in your browser — no data leaves your machine.</p>
+  <p class="hero-sub">Client-specific analytics, keyword tools, and lookup utilities. Everything runs in your browser - no data leaves your machine.</p>
 </div>
 
 <div class="tools-wrap">
 
-  <p class="section-label">Amazon PPC</p>
   <div class="tools-grid">
 
     <a class="tool-card" href="./wisewell/">
@@ -257,11 +247,6 @@ body {
       </div>
     </a>
 
-  </div>
-
-  <p class="section-label">Google Ads</p>
-  <div class="tools-grid">
-
     <a class="tool-card" href="./google-ads/">
       <div class="card-top">
         <div class="card-icon" style="background:rgba(239,159,39,0.1)">
@@ -277,29 +262,6 @@ body {
       <div class="card-meta">
         <span class="meta-dot" style="background:var(--orange)"></span>
         Claude API · per-client config · browser-only
-      </div>
-    </a>
-
-  </div>
-
-  <p class="section-label">Coming soon</p>
-  <div class="tools-grid">
-
-    <a class="tool-card disabled" href="#">
-      <div class="card-top">
-        <div class="card-icon" style="background:rgba(55,138,221,0.1)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <span class="card-badge badge-soon">Planned</span>
-      </div>
-      <div>
-        <p class="card-name">Wiper Blade Fitment Lookup</p>
-        <p class="card-client">Wexco · WiperExpress</p>
-      </div>
-      <p class="card-desc">Customer-facing fitment and cross-reference tool. Year / make / model lookup with blade size output.</p>
-      <div class="card-meta">
-        <span class="meta-dot" style="background:var(--blue)"></span>
-        Supabase · Vercel · in architecture
       </div>
     </a>
 
