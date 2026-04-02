@@ -3,318 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jorgensen Strategy & Ops · Tools</title>
+<title>Keyword Triage Tool · Tompkins PPC</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 <style>
-*, *::before, *::after { box-sizing: border-box; }
-
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap');
-
-:root {
-  --bg:       #f8f8f6;
-  --surface:  #f0efea;
-  --border:   rgba(0,0,0,0.09);
-  --text:     #1a1a1a;
-  --muted:    #9ca3af;
-  --faint:    #c4c4c0;
-  --green:    #1D9E75;
-  --orange:   #EF9F27;
-  --purple:   #7F77DD;
-  --blue:     #378ADD;
-}
-
-body {
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-}
-
-/* ── Top bar ── */
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(248,248,246,0.95);
-  backdrop-filter: blur(8px);
-  border-bottom: 0.5px solid var(--border);
-  padding: 12px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.topbar-wordmark {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--text);
-  text-transform: uppercase;
-}
-.topbar-tag {
-  font-size: 10px;
-  color: var(--muted);
-  font-weight: 400;
-}
-
-/* ── Hero ── */
-.hero {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 64px 28px 40px;
-}
-.hero-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin: 0 0 14px;
-}
-.hero-title {
-  font-size: clamp(28px, 5vw, 40px);
-  font-weight: 300;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  margin: 0 0 14px;
-}
-.hero-title strong { font-weight: 500; }
-.hero-sub {
-  font-size: 13px;
-  color: var(--muted);
-  margin: 0;
-  max-width: 520px;
-  line-height: 1.7;
-}
-
-/* ── Grid ── */
-.tools-wrap {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 0 28px 80px;
-}
-.section-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin: 0 0 14px;
-  padding-bottom: 10px;
-  border-bottom: 0.5px solid var(--border);
-}
-.tools-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 10px;
-  margin-bottom: 48px;
-}
-
-/* ── Tool card ── */
-.tool-card {
-  background: #fff;
-  border: 0.5px solid var(--border);
-  border-radius: 12px;
-  padding: 20px;
-  text-decoration: none;
-  color: inherit;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  transition: box-shadow 0.14s, transform 0.14s;
-  cursor: pointer;
-}
-.tool-card:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.07);
-  transform: translateY(-1px);
-}
-.tool-card.disabled {
-  opacity: 0.5;
-  cursor: default;
-  pointer-events: none;
-}
-
-.card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-.card-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.card-badge {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-.badge-live    { background: rgba(29,158,117,0.1);  color: var(--green);  }
-.badge-soon    { background: var(--surface);         color: var(--muted);  }
-.badge-wip     { background: rgba(239,159,39,0.1);  color: var(--orange); }
-
-.card-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text);
-  margin: 0;
-  line-height: 1.3;
-}
-.card-client {
-  font-family: 'DM Mono', monospace;
-  font-size: 9.5px;
-  color: var(--muted);
-  margin: 2px 0 0;
-  letter-spacing: 0.04em;
-}
-.card-desc {
-  font-size: 11.5px;
-  color: var(--muted);
-  line-height: 1.6;
-  margin: 0;
-}
-.card-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 0.5px solid var(--border);
-  font-size: 10px;
-  color: var(--faint);
-}
-.meta-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* ── Footer ── */
-.footer {
-  border-top: 0.5px solid var(--border);
-  padding: 20px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 880px;
-  margin: 0 auto;
-}
-.footer-txt { font-size: 10px; color: var(--faint); }
-
-@media (max-width: 540px) {
-  .hero    { padding: 40px 18px 28px; }
-  .tools-wrap { padding: 0 18px 60px; }
-  .topbar  { padding: 12px 18px; }
-}
+  body { margin: 0; background: #030712; }
+  #loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 100vh; color: #6b7280; font-family: sans-serif; font-size: 13px;
+  }
 </style>
 </head>
 <body>
+<div id="loading">Loading tool...</div>
+<div id="root" style="display:none"></div>
 
-<div class="topbar">
-  <span class="topbar-wordmark">Jorgensen Strategy &amp; Ops</span>
-  <span class="topbar-tag">Internal tools</span>
-</div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo } = React;
 
-<div class="hero">
-  <p class="hero-label">Tools &amp; Dashboards</p>
-  <h1 class="hero-title">Built for the accounts.<br><strong>Not for everyone.</strong></h1>
-  <p class="hero-sub">Client-specific analytics, keyword tools, and lookup utilities. Everything runs in your browser — no data leaves your machine.</p>
-</div>
+// ── paste the full component code below this line ──────────────────────────
 
-<div class="tools-wrap">
+const PRACTICE_TAXONOMY = {
+  "Criminal": ["DUI/DWI","Domestic Violence","Drug Charges","Assault/Battery","Federal Crimes","Expungement","Sex Crimes","White Collar","Weapons Charges","Theft/Burglary","Criminal Defense (General)"],
+  "Family": ["Divorce","Custody","Alimony/Support","Mediation","Adoption","Restraining Orders","Prenuptial","Paternity","Guardianship","Family Law (General)"],
+  "Workers Comp": ["Workplace Injury","Occupational Disease","Denied Claims","Employer Retaliation","Workers Comp (General)"],
+  "Personal Injury": ["Auto Accident","Slip and Fall","Wrongful Death","Product Liability","Premises Liability","PI (General)"],
+  "Medical Malpractice": ["Surgical Errors","Misdiagnosis","Birth Injuries","Medication Errors","Hospital Negligence","Med Mal (General)"],
+  "Immigration": ["Deportation Defense","Visa Applications","Green Card","Asylum","Citizenship","DACA","Immigration (General)"],
+  "Employment": ["Wrongful Termination","Discrimination","Harassment","Wage Disputes","FMLA","Non-Compete","Employment (General)"],
+  "Bankruptcy": ["Chapter 7","Chapter 13","Chapter 11","Debt Relief","Creditor Defense","Bankruptcy (General)"],
+  "Estate Planning": ["Wills","Trusts","Probate","Power of Attorney","Estate Administration","Estate Planning (General)"],
+  "Real Estate": ["Residential Transactions","Commercial Transactions","Landlord/Tenant","Foreclosure Defense","Title Disputes","Real Estate (General)"],
+  "Business/Corporate": ["Business Formation","Contracts","Mergers and Acquisitions","Business Litigation","Intellectual Property","Corporate (General)"],
+  "Civil Litigation": ["General Civil","Class Action","Appeals","Civil Litigation (General)"],
+  "Social Security/Disability": ["SSDI","SSI","Disability Appeals","Veterans Benefits","SSD (General)"],
+  "Tax Law": ["IRS Defense","Tax Disputes","Audit Representation","Tax Planning","Tax Law (General)"],
+  "Elder Law": ["Medicaid Planning","Nursing Home Abuse","Elder Guardianship","Elder Veterans Benefits","Elder Law (General)"],
+  "Traffic/Violations": ["Speeding","Reckless Driving","License Suspension","Red Light/Camera","Traffic (General)"],
+  "General": ["General Practice"],
+};
 
-  <p class="section-label">Amazon PPC</p>
-  <div class="tools-grid">
+const PRACTICE_AREAS = Object.keys(PRACTICE_TAXONOMY);
 
-    <a class="tool-card" href="./wisewell/">
-      <div class="card-top">
-        <div class="card-icon" style="background:rgba(29,158,117,0.1)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18" stroke="#1D9E75" stroke-width="1.5" stroke-linecap="round"/></svg>
+const BUCKETS = ["Winner","Potential - Watch","Potential - Low Signal","Drain","Branded","Competitor","Service Mismatch","Geographic Mismatch","Junk/Toss","Unassigned"];
+
+const BUCKET_COLORS = {
+  "Winner":"bg-emerald-900 text-emerald-300 border border-emerald-700",
+  "Potential - Watch":"bg-blue-900 text-blue-300 border border-blue-700",
+  "Potential - Low Signal":"bg-slate-800 text-slate-300 border border-slate-600",
+  "Drain":"bg-amber-900 text-amber-300 border border-amber-700",
+  "Branded":"bg-purple-900 text-purple-300 border border-purple-700",
+  "Competitor":"bg-orange-900 text-orange-300 border border-orange-700",
+  "Service Mismatch":"bg-yellow-900 text-yellow-300 border border-yellow-700",
+  "Geographic Mismatch":"bg-pink-900 text-pink-300 border border-pink-700",
+  "Junk/Toss":"bg-red-900 text-red-300 border border-red-700",
+  "Unassigned":"bg-gray-700 text-gray-300 border border-gray-600",
+};
+const BUCKET_DOT = {
+  "Winner":"bg-emerald-400","Potential - Watch":"bg-blue-400","Potential - Low Signal":"bg-slate-400",
+  "Drain":"bg-amber-400","Branded":"bg-purple-400","Competitor":"bg-orange-400",
+  "Service Mismatch":"bg-yellow-400","Geographic Mismatch":"bg-pink-400",
+  "Junk/Toss":"bg-red-400","Unassigned":"bg-gray-400",
+};
+const BUCKET_DESC = {
+  "Winner":"Relevant, converting (1+ conv), CPA within target. Push to exact match.",
+  "Potential - Watch":"Relevant, practice-specific intent, has data but not yet converting. Monitor closely.",
+  "Potential - Low Signal":"Relevant but generic, no practice-specific modifiers, or insufficient data. Needs runway.",
+  "Drain":"Relevant intent, 10+ clicks, zero conversions. Actively wasting spend. Pause or negate.",
+  "Branded":"Own firm name/variants. Route to brand campaign only.",
+  "Competitor":"Another firm's name or brand. Route to competitor campaign only.",
+  "Service Mismatch":"Legal intent but wrong practice focus for this ad group.",
+  "Geographic Mismatch":"Correct practice intent but wrong service area. Negate in non-geo campaigns.",
+  "Junk/Toss":"Irrelevant, informational, no commercial intent.",
+  "Unassigned":"Not yet scored.",
+};
+
+const CONTINGENCY_FRIENDLY = ["Personal Injury","Workers Comp","Medical Malpractice","Social Security/Disability"];
+
+const PRO_BONO_PATTERNS = ["pro bono","probono","free legal work","free representation","free legal aid","free legal help","free legal assistance","volunteer lawyer","volunteer attorney"];
+const FREE_CONSULT_PATTERNS = ["free consult","free consultation","free case review","free case evaluation","no cost consult","no cost consultation","free legal consult","free legal consultation"];
+const CONTINGENCY_PATTERNS = ["free case","no cost lawyer","no cost attorney","no win no fee","no fee unless","contingency fee","no upfront","pay nothing unless","only pay if","free legal","no cost legal"];
+
+const termMatchesPatterns=(term,patterns)=>patterns.some(p=>term.toLowerCase().includes(p));
+
+const preScreen=(term, noFreeConsult, practiceArea)=>{
+  if(termMatchesPatterns(term,PRO_BONO_PATTERNS)) return "Junk/Toss";
+  if(noFreeConsult&&termMatchesPatterns(term,FREE_CONSULT_PATTERNS)) return "Junk/Toss";
+  const isContingencyFriendly = CONTINGENCY_FRIENDLY.includes(practiceArea);
+  if(noFreeConsult && !isContingencyFriendly && termMatchesPatterns(term,CONTINGENCY_PATTERNS)) return "Junk/Toss";
+  return null;
+};
+
+const emptyTerm=()=>({id:crypto.randomUUID(),term:"",campaign:"",adGroup:"",clicks:"",impressions:"",cost:"",conversions:"",ctr:"",roas:"",cpa:"",bucket:"Unassigned",practiceArea:"",practiceFocus:"",scoreReason:"",confidence:"",flagClone:false,flagBidUp:false,flagPushExact:false});
+const mkClient=(name,practiceAreas=[],noFreeConsult=false,targetCPA=200,serviceArea="")=>({id:crypto.randomUUID(),name,practiceAreas,noFreeConsult,targetCPA,serviceArea,adGroupMap:{},terms:[]});
+const adGroupKey=(campaign,adGroup)=>`${campaign}||${adGroup}`;
+
+const parseTSV=(raw)=>{
+  const lines=raw.trim().split("\n").filter(l=>l.trim());
+  if(!lines.length) return [];
+  const headers=lines[0].split("\t").map(h=>h.trim().toLowerCase().replace(/[^a-z0-9]/g,""));
+  const map={term:["searchterm","keyword","term","kw","query"],campaign:["campaign","campaignname","camp"],adGroup:["adgroup","adgroupname","group"],clicks:["clicks","click"],impressions:["impressions","impr","imps"],cost:["cost","spend"],conversions:["conversions","conv","convs"],ctr:["ctr"],roas:["roas"],cpa:["cpa","costperconv"]};
+  const idx={};
+  Object.entries(map).forEach(([field,aliases])=>{const i=headers.findIndex(h=>aliases.includes(h));if(i>=0) idx[field]=i;});
+  return lines.slice(1).map(line=>{const cols=line.split("\t");const t=emptyTerm();Object.entries(idx).forEach(([field,i])=>{if(cols[i]!==undefined) t[field]=cols[i].trim();});return t;}).filter(t=>t.term);
+};
+
+const fmt=(v,type)=>{
+  if(v===""||v===null||v===undefined) return "-";
+  const n=parseFloat(String(v).replace(/[$,%]/g,""));
+  if(isNaN(n)) return v;
+  if(type==="currency") return "$"+n.toFixed(2);
+  if(type==="pct") return (n<1?(n*100).toFixed(1):n.toFixed(1))+"%";
+  if(type==="roas") return n.toFixed(2)+"x";
+  if(type==="num") return Math.round(n).toLocaleString();
+  return v;
+};
+const formatKw=(term,type)=>{if(type==="Exact") return `[${term}]`;if(type==="Phrase") return `"${term}"`;return term;};
+const CONFIDENCE_COLORS={"High":"text-emerald-400","Medium":"text-yellow-400","Low":"text-red-400","":"text-gray-600"};
+const CHUNK_SIZE=25;
+
+async function scoreChunk(terms, practiceArea, practiceFocus, firmName, targetCPA, serviceArea){
+  const termList=terms.map((t,i)=>{
+    const conv=parseFloat(t.conversions)||0;const cost=parseFloat(String(t.cost).replace(/[$,]/g,""))||0;const clicks=parseFloat(t.clicks)||0;const impr=parseFloat(t.impressions)||0;const cpa=conv>0?"$"+(cost/conv).toFixed(2):"N/A";
+    return `${i+1}. Term: "${t.term}" | Campaign: "${t.campaign||"Unknown"}" | Ad Group: "${t.adGroup||"Unknown"}" | Clicks: ${clicks} | Impressions: ${impr} | Conversions: ${conv} | CPA: ${cpa} | Target CPA: $${targetCPA}`;
+  }).join("\n");
+  const geoInstructions=serviceArea?`Service Area: ${serviceArea}\nGeographic scoring rules:\n- If the term contains a location signal that MATCHES the service area: score on relevance as normal.\n- If the term contains a location signal that DOES NOT match the service area: classify as "Geographic Mismatch".\n- If the term contains "near me", "nearby", "local", or no location signal: ignore geography and score on practice relevance only.`:`No service area defined. Ignore geography in scoring.`;
+  const prompt=`You are a senior Google Ads expert specializing in legal PPC. You are auditing search terms for a law firm${firmName?` called "${firmName}"`:""}.\n\nPractice Area: ${practiceArea}\nPractice Focus: ${practiceFocus}\n\n${geoInstructions}\n\nBUCKET DEFINITIONS:\n- Winner: Directly relevant to "${practiceFocus}", strong commercial intent, practice-specific legal noun present, converting well.\n- Potential - Watch: Relevant to "${practiceFocus}" AND contains at least one practice-specific noun OR a strong commercial modifier.\n- Potential - Low Signal: Topically related but GENERIC - no legal service noun, no commercial modifier, or purely informational.\n- Drain: Relevant or semi-relevant, spending with zero conversions after meaningful click volume.\n- Branded: Contains the firm's own name or clear brand variants.\n- Competitor: Contains another law firm's name or brand.\n- Service Mismatch: Has legal intent but clearly belongs to a DIFFERENT practice focus than "${practiceFocus}".\n- Geographic Mismatch: Correct practice intent but contains a location that does NOT match the service area.\n- Junk/Toss: Irrelevant, purely informational, no commercial intent.\n\nTerms:\n${termList}\n\nRespond with ONLY a JSON array, one object per term:\n[{"bucket":"Potential - Watch","confidence":"High","reason":"DUI attorney with near me modifier, clear commercial intent"},...]\n\nNo explanation, no markdown, just the raw JSON array.`;
+  const response=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,messages:[{role:"user",content:prompt}]})});
+  const data=await response.json();
+  const text=data.content?.find(b=>b.type==="text")?.text||"[]";
+  try{return JSON.parse(text.replace(/```json|```/g,"").trim());}
+  catch{return terms.map(()=>({bucket:"Potential - Low Signal",confidence:"Low",reason:"Parse error, defaulted"}));}
+}
+
+function PracticeFocusSelect({value,onChange,placeholder="Select focus",className=""}){
+  return(<select value={value} onChange={e=>onChange(e.target.value)} className={`bg-gray-800 border border-gray-700 rounded px-2 py-1 text-xs text-white ${className}`}><option value="">{placeholder}</option>{Object.entries(PRACTICE_TAXONOMY).map(([area,focuses])=>(<optgroup key={area} label={area}>{focuses.map(f=><option key={f} value={`${area}||${f}`}>{f}</option>)}</optgroup>))}</select>);
+}
+
+export default function App(){
+  const [clients,setClients]=useState([mkClient("Client 1",[],false,200,"")]);
+  const [activeClientId,setActiveClientId]=useState(()=>clients[0].id);
+  const [showClientModal,setShowClientModal]=useState(false);
+  const [newClientName,setNewClientName]=useState("");
+  const [newClientAreas,setNewClientAreas]=useState([]);
+  const [newClientNoFreeConsult,setNewClientNoFreeConsult]=useState(false);
+  const [newClientTargetCPA,setNewClientTargetCPA]=useState(200);
+  const [newClientServiceArea,setNewClientServiceArea]=useState("");
+  const [renamingId,setRenamingId]=useState(null);
+  const [renameVal,setRenameVal]=useState("");
+  const [showAdGroupMap,setShowAdGroupMap]=useState(false);
+  const [pendingTerms,setPendingTerms]=useState([]);
+  const [adGroupDraft,setAdGroupDraft]=useState({});
+  const [selected,setSelected]=useState(new Set());
+  const [filterBucket,setFilterBucket]=useState("All");
+  const [filterArea,setFilterArea]=useState("All");
+  const [filterFocus,setFilterFocus]=useState("All");
+  const [filterCampaign,setFilterCampaign]=useState("All");
+  const [filterAdGroup,setFilterAdGroup]=useState("All");
+  const [filterSearch,setFilterSearch]=useState("");
+  const [sortCol,setSortCol]=useState("term");
+  const [sortDir,setSortDir]=useState("asc");
+  const [tab,setTab]=useState("table");
+  const [pasteRaw,setPasteRaw]=useState("");
+  const [pasteError,setPasteError]=useState("");
+  const [showAddRow,setShowAddRow]=useState(false);
+  const [newRow,setNewRow]=useState(emptyTerm());
+  const [exportMatchType,setExportMatchType]=useState("Exact");
+  const [exportBuckets,setExportBuckets]=useState(["Junk/Toss","Drain","Service Mismatch","Competitor","Geographic Mismatch"]);
+  const [exportGroupBy,setExportGroupBy]=useState("adGroup");
+  const [exportCampaign,setExportCampaign]=useState("All");
+  const [bulkBucket,setBulkBucket]=useState("Junk/Toss");
+  const [bulkFocus,setBulkFocus]=useState("");
+  const [copied,setCopied]=useState(false);
+  const [scoring,setScoring]=useState(false);
+  const [scoringTermId,setScoringTermId]=useState(null);
+  const [scoreProgress,setScoreProgress]=useState({done:0,total:0});
+  const [scoreError,setScoreError]=useState("");
+  const [tooltip,setTooltip]=useState({visible:false,text:"",x:0,y:0});
+
+  const activeClient=clients.find(c=>c.id===activeClientId)||clients[0];
+  const terms=activeClient.terms;
+  const setTerms=(updater)=>setClients(prev=>prev.map(c=>c.id===activeClientId?{...c,terms:typeof updater==="function"?updater(c.terms):updater}:c));
+  const updateClient=(id,fields)=>setClients(prev=>prev.map(c=>c.id===id?{...c,...fields}:c));
+
+  const applyPostScoreLogic=(t,bucket,activeClient)=>{
+    const clicks=parseFloat(t.clicks)||0;const impressions=parseFloat(t.impressions)||0;const conv=parseFloat(t.conversions)||0;const cost=parseFloat(String(t.cost).replace(/[$,]/g,""))||0;const cpa=conv>0?cost/conv:Infinity;const hasMinData=clicks>=10&&impressions>=10;
+    if(["Geographic Mismatch","Branded","Competitor","Service Mismatch","Junk/Toss"].includes(bucket)) return bucket;
+    if(!hasMinData&&["Winner","Drain"].includes(bucket)) bucket="Potential - Low Signal";
+    if(bucket==="Winner"&&(conv<1||cpa>activeClient.targetCPA)) bucket="Potential - Watch";
+    if(bucket==="Potential - Watch"&&hasMinData&&clicks>=10&&conv===0) bucket="Drain";
+    return bucket;
+  };
+
+  const switchClient=(id)=>{setActiveClientId(id);setSelected(new Set());setFilterBucket("All");setFilterCampaign("All");setFilterAdGroup("All");setFilterArea("All");setFilterFocus("All");setFilterSearch("");setTab("table");};
+  const addClient=()=>{if(!newClientName.trim()) return;const c=mkClient(newClientName.trim(),newClientAreas,newClientNoFreeConsult,newClientTargetCPA,newClientServiceArea);setClients(prev=>[...prev,c]);setActiveClientId(c.id);setNewClientName("");setNewClientAreas([]);setNewClientNoFreeConsult(false);setNewClientTargetCPA(200);setNewClientServiceArea("");setShowClientModal(false);setSelected(new Set());setTab("table");};
+  const deleteClient=(id)=>{if(clients.length===1) return;const remaining=clients.filter(c=>c.id!==id);setClients(remaining);if(activeClientId===id){setActiveClientId(remaining[0].id);setSelected(new Set());}};
+  const renameClient=(id)=>{if(!renameVal.trim()){setRenamingId(null);return;}setClients(prev=>prev.map(c=>c.id===id?{...c,name:renameVal.trim()}:c));setRenamingId(null);};
+  const clearClientTerms=(id)=>{setClients(prev=>prev.map(c=>c.id===id?{...c,terms:[],adGroupMap:{}}:c));if(id===activeClientId) setSelected(new Set());};
+  const updateTerm=(id,field,val)=>setTerms(prev=>prev.map(t=>t.id===id?{...t,[field]:val}:t));
+  const deleteTerm=(id)=>{setTerms(prev=>prev.filter(t=>t.id!==id));setSelected(prev=>{const s=new Set(prev);s.delete(id);return s;});};
+
+  const handlePaste=()=>{const parsed=parseTSV(pasteRaw);if(!parsed.length){setPasteError("No valid data found.");return;}const uniqueAGs={};parsed.forEach(t=>{const key=adGroupKey(t.campaign,t.adGroup);if(!uniqueAGs[key]) uniqueAGs[key]={campaign:t.campaign,adGroup:t.adGroup,key};});const draft={};Object.keys(uniqueAGs).forEach(key=>{const existing=activeClient.adGroupMap[key];draft[key]=existing?`${existing.practiceArea}||${existing.practiceFocus}`:"";});setPendingTerms(parsed);setAdGroupDraft(draft);setShowAdGroupMap(true);setPasteRaw("");setPasteError("");};
+
+  const confirmAdGroupMap=()=>{const newMap={...activeClient.adGroupMap};Object.entries(adGroupDraft).forEach(([key,val])=>{if(val){const[area,focus]=val.split("||");newMap[key]={practiceArea:area,practiceFocus:focus};}});const tagged=pendingTerms.map(t=>{const key=adGroupKey(t.campaign,t.adGroup);const mapping=newMap[key]||{practiceArea:activeClient.practiceAreas[0]||"",practiceFocus:""};return{...t,practiceArea:mapping.practiceArea,practiceFocus:mapping.practiceFocus};});setClients(prev=>prev.map(c=>c.id===activeClientId?{...c,adGroupMap:newMap,terms:[...c.terms,...tagged]}:c));setPendingTerms([]);setAdGroupDraft({});setShowAdGroupMap(false);setTab("table");};
+
+  const runAIScore=async(singleTerm=null)=>{
+    const toScore=singleTerm?[singleTerm]:terms.filter(t=>t.bucket==="Unassigned");
+    if(!toScore.length){setScoreError("No Unassigned terms to score.");return;}
+    if(singleTerm) setScoringTermId(singleTerm.id);
+    else{setScoring(true);setScoreError("");setScoreProgress({done:0,total:toScore.length});}
+    const preScreened={};const needsAI=[];
+    toScore.forEach(t=>{const r=preScreen(t.term,activeClient.noFreeConsult,t.practiceArea);if(r) preScreened[t.id]=r;else needsAI.push(t);});
+    const byFocus={};needsAI.forEach(t=>{const key=`${t.practiceArea}||${t.practiceFocus||"General"}`;if(!byFocus[key]) byFocus[key]=[];byFocus[key].push(t);});
+    const results={};Object.keys(preScreened).forEach(id=>results[id]={bucket:preScreened[id],confidence:"High",reason:"Matched global blocklist"});
+    try{
+      for(const[focusKey,focusTerms] of Object.entries(byFocus)){const[area,focus]=focusKey.split("||");const chunks=[];for(let i=0;i<focusTerms.length;i+=CHUNK_SIZE) chunks.push(focusTerms.slice(i,i+CHUNK_SIZE));for(const chunk of chunks){const scored=await scoreChunk(chunk,area,focus,activeClient.name,activeClient.targetCPA,activeClient.serviceArea);chunk.forEach((t,i)=>{results[t.id]=scored[i]||{bucket:"Potential - Low Signal",confidence:"Low",reason:"No result returned"};});if(!singleTerm) setScoreProgress({done:Object.keys(results).length,total:toScore.length});}}
+      setTerms(prev=>prev.map(t=>{if(!results[t.id]) return t;const{bucket:rawBucket,confidence,reason}=results[t.id];const bucket=applyPostScoreLogic(t,rawBucket,activeClient);const flagPushExact=bucket==="Winner"?true:t.flagPushExact;return{...t,bucket,confidence,scoreReason:reason,flagPushExact};}));
+    }catch(e){setScoreError("Scoring failed. Check your connection and try again.");}
+    if(singleTerm) setScoringTermId(null);else setScoring(false);
+  };
+
+  const toggleSelect=(id)=>setSelected(prev=>{const s=new Set(prev);s.has(id)?s.delete(id):s.add(id);return s;});
+  const campaigns=useMemo(()=>["All",...new Set(terms.map(t=>t.campaign).filter(Boolean).sort())],[terms]);
+  const adGroups=useMemo(()=>{let t=[...terms];if(filterCampaign!=="All") t=t.filter(x=>x.campaign===filterCampaign);return["All",...new Set(t.map(x=>x.adGroup).filter(Boolean).sort())];});
+  const availableFocuses=useMemo(()=>filterArea==="All"?[]:PRACTICE_TAXONOMY[filterArea]||[],[filterArea]);
+  const filtered=useMemo(()=>{let r=[...terms];if(filterBucket!=="All") r=r.filter(t=>t.bucket===filterBucket);if(filterArea!=="All") r=r.filter(t=>t.practiceArea===filterArea);if(filterFocus!=="All") r=r.filter(t=>t.practiceFocus===filterFocus);if(filterCampaign!=="All") r=r.filter(t=>t.campaign===filterCampaign);if(filterAdGroup!=="All") r=r.filter(t=>t.adGroup===filterAdGroup);if(filterSearch) r=r.filter(t=>t.term.toLowerCase().includes(filterSearch.toLowerCase()));r.sort((a,b)=>{let av=a[sortCol]??"",bv=b[sortCol]??"";const an=parseFloat(String(av).replace(/[$,%x]/g,"")),bn=parseFloat(String(bv).replace(/[$,%x]/g,""));if(!isNaN(an)&&!isNaN(bn)) return sortDir==="asc"?an-bn:bn-an;return sortDir==="asc"?String(av).localeCompare(String(bv)):String(bv).localeCompare(String(av));});return r;},[terms,filterBucket,filterArea,filterFocus,filterCampaign,filterAdGroup,filterSearch,sortCol,sortDir]);
+  const exportGroups=useMemo(()=>{let r=terms.filter(t=>exportBuckets.includes(t.bucket));if(exportCampaign!=="All") r=r.filter(t=>t.campaign===exportCampaign);const groups={};r.forEach(t=>{const key=exportGroupBy==="campaign"?(t.campaign||"No Campaign"):`${t.campaign||"No Campaign"} > ${t.adGroup||"No Ad Group"}`;if(!groups[key]) groups[key]=[];groups[key].push(t);});return groups;},[terms,exportBuckets,exportCampaign,exportGroupBy]);
+  const exportText=useMemo(()=>Object.entries(exportGroups).map(([g,ts])=>`# ${g}\n${ts.map(t=>formatKw(t.term,exportMatchType)).join("\n")}`).join("\n\n"),[exportGroups,exportMatchType]);
+  const buildCSV=(termList)=>{const headers=["Search Term","Campaign","Ad Group","Bucket","Practice Area","Practice Focus","Clicks","Impressions","Cost","Conversions","CTR","CPA","ROAS","Confidence","Score Reason","Bid Up","Push to Exact","Clone"];const rows=termList.map(t=>[`"${t.term}"`,`"${t.campaign||""}"`,`"${t.adGroup||""}"`,`"${t.bucket}"`,`"${t.practiceArea||""}"`,`"${t.practiceFocus||""}"`,t.clicks||"",t.impressions||"",t.cost||"",t.conversions||"",t.ctr||"",t.cpa||"",t.roas||"",`"${t.confidence||""}"`,`"${t.scoreReason||""}"`,t.flagBidUp?"Yes":"No",t.flagPushExact?"Yes":"No",t.flagClone?"Yes":"No"].join(","));return[headers.join(","),...rows].join("\n");};
+  const downloadFile=(content,filename)=>{const encoded="data:text/csv;charset=utf-8,"+encodeURIComponent(content);const a=document.createElement("a");a.href=encoded;a.download=filename;a.click();};
+  const sortHeader=(col)=>{if(sortCol===col) setSortDir(d=>d==="asc"?"desc":"asc");else{setSortCol(col);setSortDir("asc");}};
+  const colHead=(col,label)=>(<th key={col} onClick={()=>sortHeader(col)} className="px-2 py-2 text-left text-xs font-semibold text-gray-400 cursor-pointer hover:text-white whitespace-nowrap select-none">{label}{sortCol===col?(sortDir==="asc"?" ↑":" ↓"):""}</th>);
+  const bucketCounts=useMemo(()=>{const c={};BUCKETS.forEach(b=>c[b]=0);terms.forEach(t=>{if(c[t.bucket]!==undefined)c[t.bucket]++;});return c;},[terms]);
+  const unassignedCount=terms.filter(t=>t.bucket==="Unassigned").length;
+  const noFocusCount=terms.filter(t=>t.bucket==="Unassigned"&&!t.practiceFocus).length;
+  const exportCampaigns=useMemo(()=>["All",...new Set(terms.map(t=>t.campaign).filter(Boolean).sort())],[terms]);
+  const uniqueAdGroupsInDraft=useMemo(()=>Object.keys(adGroupDraft).map(key=>{const[campaign,adGroup]=key.split("||");return{key,campaign,adGroup};}).sort((a,b)=>a.campaign.localeCompare(b.campaign)||a.adGroup.localeCompare(b.adGroup)),[adGroupDraft]);
+
+  const toggleAll=()=>{if(selected.size===filtered.length) setSelected(new Set());else setSelected(new Set(filtered.map(t=>t.id)));};
+  const bulkAssign=()=>{setTerms(prev=>prev.map(t=>{if(!selected.has(t.id)) return t;const update={...t,bucket:bulkBucket};if(bulkFocus){const[a,f]=bulkFocus.split("||");update.practiceArea=a;update.practiceFocus=f;}return update;}));setSelected(new Set());};
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-gray-100 font-sans">
+      {tooltip.visible&&(<div className="fixed z-50 bg-gray-800 border border-gray-600 rounded px-2 py-1.5 text-xs text-gray-200 max-w-xs shadow-xl pointer-events-none" style={{left:tooltip.x+10,top:tooltip.y-30}}>{tooltip.text}</div>)}
+
+      {showAdGroupMap&&(<div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"><div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col"><div className="px-6 py-4 border-b border-gray-700"><h3 className="text-sm font-semibold text-white">Map Ad Groups to Practice Focus</h3><p className="text-xs text-gray-400 mt-1">{pendingTerms.length} terms across {uniqueAdGroupsInDraft.length} ad groups.</p></div><div className="overflow-y-auto flex-1 px-6 py-4"><table className="w-full text-xs"><thead><tr className="border-b border-gray-700"><th className="text-left text-gray-400 pb-2 pr-3">Campaign</th><th className="text-left text-gray-400 pb-2 pr-3">Ad Group</th><th className="text-left text-gray-400 pb-2">Practice Focus</th></tr></thead><tbody>{uniqueAdGroupsInDraft.map(({key,campaign,adGroup})=>(<tr key={key} className="border-b border-gray-800"><td className="py-2 pr-3 text-gray-300 max-w-[140px] truncate">{campaign||"-"}</td><td className="py-2 pr-3 text-gray-300 max-w-[140px] truncate">{adGroup||"-"}</td><td className="py-2"><PracticeFocusSelect value={adGroupDraft[key]||""} onChange={val=>setAdGroupDraft(prev=>({...prev,[key]:val}))} placeholder="Client default" className="w-48"/></td></tr>))}</tbody></table></div><div className="px-6 py-4 border-t border-gray-700 flex justify-between items-center"><p className="text-xs text-gray-500">{Object.values(adGroupDraft).filter(Boolean).length} of {uniqueAdGroupsInDraft.length} mapped</p><div className="flex gap-2"><button onClick={()=>{setShowAdGroupMap(false);setPendingTerms([]);setAdGroupDraft({});}} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded">Cancel</button><button onClick={confirmAdGroupMap} className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-1.5 rounded font-medium">Confirm & Import</button></div></div></div></div>)}
+
+      <div className="bg-gray-900 border-b border-gray-700 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+        <span className="text-xs text-gray-500 whitespace-nowrap mr-1">Clients:</span>
+        {clients.map(c=>(<div key={c.id} className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium whitespace-nowrap border transition-colors ${activeClientId===c.id?"bg-indigo-700 border-indigo-500 text-white":"bg-gray-800 border-gray-700 text-gray-400 hover:text-white"}`}>{renamingId===c.id?(<input autoFocus value={renameVal} onChange={e=>setRenameVal(e.target.value)} onBlur={()=>renameClient(c.id)} onKeyDown={e=>{if(e.key==="Enter")renameClient(c.id);if(e.key==="Escape")setRenamingId(null);}} className="bg-transparent border-b border-indigo-400 outline-none text-white w-24 text-xs"/>):(<button onClick={()=>switchClient(c.id)} onDoubleClick={()=>{setRenamingId(c.id);setRenameVal(c.name);}} className="outline-none">{c.name}</button>)}<span className="text-gray-500 ml-0.5">({c.terms.length})</span>{activeClientId===c.id&&clients.length>1&&(<button onClick={()=>deleteClient(c.id)} className="ml-1 text-gray-500 hover:text-red-400 leading-none">✕</button>)}</div>))}
+        <button onClick={()=>setShowClientModal(true)} className="bg-gray-800 border border-gray-700 hover:border-indigo-500 text-gray-400 hover:text-white text-xs px-2 py-1 rounded-lg whitespace-nowrap">+ Add Client</button>
+      </div>
+
+      {showClientModal&&(<div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50"><div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-96 shadow-2xl max-h-[90vh] overflow-y-auto"><h3 className="text-sm font-semibold text-white mb-3">New Client</h3><label className="text-xs text-gray-400 block mb-1">Client / Firm Name</label><input autoFocus value={newClientName} onChange={e=>setNewClientName(e.target.value)} placeholder="e.g. Smith & Associates Law" className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 mb-3"/><label className="text-xs text-gray-400 block mb-1">Practice Areas</label><div className="flex flex-wrap gap-1 mb-3 max-h-28 overflow-y-auto">{PRACTICE_AREAS.map(p=>(<button key={p} onClick={()=>setNewClientAreas(prev=>prev.includes(p)?prev.filter(x=>x!==p):[...prev,p])} className={`text-xs px-2 py-1 rounded border transition-colors ${newClientAreas.includes(p)?"bg-indigo-700 border-indigo-500 text-white":"bg-gray-800 border-gray-700 text-gray-400 hover:text-white"}`}>{p}</button>))}</div><label className="text-xs text-gray-400 block mb-1">Service Area</label><input value={newClientServiceArea} onChange={e=>setNewClientServiceArea(e.target.value)} placeholder="e.g. Camden NJ, Cherry Hill NJ" className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white placeholder-gray-500 mb-3"/><label className="text-xs text-gray-400 block mb-1">Target CPA ($)</label><input type="number" value={newClientTargetCPA} onChange={e=>setNewClientTargetCPA(parseFloat(e.target.value)||0)} className="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white mb-3"/><label className="flex items-center gap-2 cursor-pointer mb-4"><input type="checkbox" checked={newClientNoFreeConsult} onChange={e=>setNewClientNoFreeConsult(e.target.checked)} className="accent-red-500 w-4 h-4"/><span className="text-xs text-gray-300">Does <span className="text-red-400 font-medium">not</span> offer free consultations</span></label><div className="flex gap-2 justify-end"><button onClick={()=>{setShowClientModal(false);setNewClientName("");setNewClientAreas([]);setNewClientNoFreeConsult(false);setNewClientTargetCPA(200);setNewClientServiceArea("");}} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded">Cancel</button><button onClick={addClient} className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-3 py-1.5 rounded font-medium">Add</button></div></div></div>)}
+
+      <div className="bg-gray-900 border-b border-gray-800 px-6 py-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 flex-wrap mb-2"><h1 className="text-base font-bold text-white">Keyword Manager <span className="ml-2 text-indigo-400 font-normal text-sm">{activeClient.name}</span></h1><div className="flex flex-wrap gap-1">{PRACTICE_AREAS.map(p=>(<button key={p} onClick={()=>updateClient(activeClient.id,{practiceAreas:activeClient.practiceAreas.includes(p)?activeClient.practiceAreas.filter(x=>x!==p):[...activeClient.practiceAreas,p]})} className={`text-xs px-2 py-0.5 rounded border transition-colors ${activeClient.practiceAreas.includes(p)?"bg-indigo-700 border-indigo-500 text-white":"bg-gray-800 border-gray-700 text-gray-500 hover:text-white"}`}>{p}</button>))}</div></div>
+            <div className="flex items-center gap-3 flex-wrap"><div className="flex items-center gap-1.5"><span className="text-xs text-gray-500">📍</span><input value={activeClient.serviceArea} onChange={e=>updateClient(activeClient.id,{serviceArea:e.target.value})} placeholder="Service area..." className="bg-gray-800 border border-gray-700 rounded px-2 py-0.5 text-xs text-white w-56 placeholder-gray-600"/></div><div className="flex items-center gap-1.5"><span className="text-xs text-gray-500">Target CPA: $</span><input type="number" value={activeClient.targetCPA} onChange={e=>updateClient(activeClient.id,{targetCPA:parseFloat(e.target.value)||0})} className="bg-gray-800 border border-gray-700 rounded px-2 py-0.5 text-xs text-white w-16"/></div><label className="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" checked={activeClient.noFreeConsult} onChange={e=>updateClient(activeClient.id,{noFreeConsult:e.target.checked})} className="accent-red-500 w-3.5 h-3.5"/><span className={`text-xs ${activeClient.noFreeConsult?"text-red-400":"text-gray-500"}`}>No free consults</span></label><p className="text-xs text-gray-500">{terms.length} terms</p></div>
+          </div>
+          <div className="flex gap-2 items-center flex-shrink-0"><button onClick={()=>{if(confirm(`Clear all terms for ${activeClient.name}?`))clearClientTerms(activeClient.id);}} className="text-xs text-gray-500 hover:text-red-400 px-2 py-1 rounded border border-gray-700 hover:border-red-700 transition-colors">Clear</button>{["table","import","export","settings"].map(t=>(<button key={t} onClick={()=>setTab(t)} className={`px-3 py-1.5 rounded text-sm font-medium capitalize transition-colors ${tab===t?"bg-indigo-600 text-white":"bg-gray-800 text-gray-400 hover:text-white"}`}>{t}</button>))}</div>
         </div>
-        <span class="card-badge badge-live">Live</span>
       </div>
-      <div>
-        <p class="card-name">Week-over-Week PPC Dashboard</p>
-        <p class="card-client">Wisewell · Amazon.ae</p>
+
+      <div className="bg-gray-900 border-b border-gray-800 px-6 py-2.5 flex gap-2 flex-wrap">
+        {BUCKETS.map(b=>(<button key={b} onClick={()=>setFilterBucket(filterBucket===b?"All":b)} className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium transition-all ${filterBucket===b?BUCKET_COLORS[b]:"bg-gray-800 text-gray-400 hover:text-white"}`}><span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${BUCKET_DOT[b]}`}></span>{b} <span className="opacity-70">({bucketCounts[b]})</span></button>))}
+        <button onClick={()=>setFilterBucket("All")} className={`px-2 py-1 rounded-full text-xs font-medium ${filterBucket==="All"?"bg-indigo-600 text-white":"bg-gray-800 text-gray-400 hover:text-white"}`}>All ({terms.length})</button>
       </div>
-      <p class="card-desc">Upload the weekly CSV export to visualize spend, revenue, ACoS, TACoS, impressions, and CTR across management phases.</p>
-      <div class="card-meta">
-        <span class="meta-dot" style="background:var(--green)"></span>
-        CSV upload · browser-only · no login required
+
+      <div className="p-6">
+        {tab==="table"&&(<div>
+          <div className="flex flex-wrap gap-2 mb-4 items-center">
+            <input value={filterSearch} onChange={e=>setFilterSearch(e.target.value)} placeholder="Search terms..." className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white placeholder-gray-500 w-36"/>
+            <select value={filterCampaign} onChange={e=>{setFilterCampaign(e.target.value);setFilterAdGroup("All");}} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white max-w-[130px]">{campaigns.map(c=><option key={c}>{c}</option>)}</select>
+            <select value={filterAdGroup} onChange={e=>setFilterAdGroup(e.target.value)} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white max-w-[130px]">{adGroups.map(a=><option key={a}>{a}</option>)}</select>
+            <select value={filterArea} onChange={e=>{setFilterArea(e.target.value);setFilterFocus("All");}} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white"><option value="All">All Areas</option>{PRACTICE_AREAS.map(p=><option key={p}>{p}</option>)}</select>
+            {filterArea!=="All"&&(<select value={filterFocus} onChange={e=>setFilterFocus(e.target.value)} className="bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-sm text-white max-w-[150px]"><option value="All">All Focuses</option>{availableFocuses.map(f=><option key={f}>{f}</option>)}</select>)}
+            <button onClick={()=>runAIScore()} disabled={scoring||unassignedCount===0} className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded font-medium transition-colors ${scoring?"bg-indigo-900 text-indigo-400 cursor-wait":unassignedCount===0?"bg-gray-800 text-gray-600 cursor-not-allowed":"bg-indigo-600 hover:bg-indigo-500 text-white"}`}>{scoring?(<><svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>Scoring {scoreProgress.done}/{scoreProgress.total}</>):(<>✦ AI Score Unassigned ({unassignedCount})</>)}</button>
+            {noFocusCount>0&&!scoring&&(<span className="text-xs text-yellow-400 border border-yellow-700 px-2 py-1 rounded">⚠ {noFocusCount} unassigned have no focus mapped</span>)}
+            <button onClick={()=>setShowAddRow(true)} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded font-medium">+ Add Term</button>
+            {scoreError&&<p className="text-red-400 text-xs">{scoreError}</p>}
+            {selected.size>0&&(<div className="flex items-center gap-2 ml-auto bg-gray-800 border border-gray-700 rounded px-3 py-1.5"><span className="text-xs text-gray-400">{selected.size} selected</span><select value={bulkBucket} onChange={e=>setBulkBucket(e.target.value)} className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-white">{BUCKETS.map(b=><option key={b}>{b}</option>)}</select><PracticeFocusSelect value={bulkFocus} onChange={setBulkFocus} placeholder="Focus (keep)" className="border-gray-600"/><button onClick={bulkAssign} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2 py-1 rounded font-medium">Apply</button></div>)}
+          </div>
+
+          {showAddRow&&(<div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-4 grid grid-cols-2 gap-3 md:grid-cols-4"><div className="col-span-2"><label className="text-xs text-gray-400 mb-1 block">Search Term</label><input value={newRow.term} onChange={e=>setNewRow(r=>({...r,term:e.target.value}))} className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-white" placeholder="Enter term..."/></div><div><label className="text-xs text-gray-400 mb-1 block">Campaign</label><input value={newRow.campaign} onChange={e=>setNewRow(r=>({...r,campaign:e.target.value}))} className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-white"/></div><div><label className="text-xs text-gray-400 mb-1 block">Ad Group</label><input value={newRow.adGroup} onChange={e=>setNewRow(r=>({...r,adGroup:e.target.value}))} className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-white"/></div>{["clicks","impressions","cost","conversions","ctr","roas","cpa"].map(f=>(<div key={f}><label className="text-xs text-gray-400 mb-1 block capitalize">{f}</label><input value={newRow[f]} onChange={e=>setNewRow(r=>({...r,[f]:e.target.value}))} className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-white"/></div>))}<div><label className="text-xs text-gray-400 mb-1 block">Bucket</label><select value={newRow.bucket} onChange={e=>setNewRow(r=>({...r,bucket:e.target.value}))} className="w-full bg-gray-700 border border-gray-600 rounded px-2 py-1.5 text-sm text-white">{BUCKETS.map(b=><option key={b}>{b}</option>)}</select></div><div><label className="text-xs text-gray-400 mb-1 block">Practice Focus</label><PracticeFocusSelect value={newRow.practiceArea&&newRow.practiceFocus?`${newRow.practiceArea}||${newRow.practiceFocus}`:""} onChange={val=>{if(val){const[a,f]=val.split("||");setNewRow(r=>({...r,practiceArea:a,practiceFocus:f}));}}} className="w-full"/></div><div className="col-span-2 md:col-span-4 flex gap-2 justify-end"><button onClick={()=>{setShowAddRow(false);setNewRow(emptyTerm());}} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-3 py-1.5 rounded">Cancel</button><button onClick={()=>{if(!newRow.term.trim()) return;setTerms(prev=>[...prev,{...newRow,id:crypto.randomUUID()}]);setNewRow(emptyTerm());setShowAddRow(false);}} className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-3 py-1.5 rounded font-medium">Add</button></div></div>)}
+
+          {filtered.length===0?(<div className="text-center py-20 text-gray-500"><p className="text-lg mb-2">No terms yet for {activeClient.name}</p><p className="text-sm">Use the Import tab to paste data or add terms manually.</p></div>):(
+            <div className="overflow-x-auto rounded-lg border border-gray-800">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-900 border-b border-gray-800"><tr><th className="px-2 py-2 w-8"><input type="checkbox" checked={selected.size===filtered.length&&filtered.length>0} onChange={toggleAll} className="accent-indigo-500"/></th>{colHead("term","Search Term")}{colHead("campaign","Campaign")}{colHead("adGroup","Ad Group")}{colHead("clicks","Clicks")}{colHead("impressions","Impr.")}{colHead("cost","Cost")}{colHead("conversions","Conv.")}{colHead("ctr","CTR")}{colHead("cpa","CPA")}{colHead("roas","ROAS")}<th className="px-2 py-2 text-left text-xs font-semibold text-gray-400 whitespace-nowrap">Bucket</th><th className="px-2 py-2 text-left text-xs font-semibold text-gray-400 whitespace-nowrap">Focus</th><th className="px-2 py-2 text-left text-xs font-semibold text-gray-400 whitespace-nowrap">AI</th><th className="px-2 py-2 text-left text-xs font-semibold text-gray-400 whitespace-nowrap">Flags</th><th className="px-2 py-2 w-8"></th></tr></thead>
+                <tbody>{filtered.map((t,i)=>(<tr key={t.id} className={`border-b border-gray-800 hover:bg-gray-900 transition-colors ${i%2===0?"bg-gray-950":"bg-gray-900/40"}`}><td className="px-2 py-2 text-center"><input type="checkbox" checked={selected.has(t.id)} onChange={()=>toggleSelect(t.id)} className="accent-indigo-500"/></td><td className="px-2 py-2 font-mono text-xs text-white max-w-[120px] truncate" title={t.term}>{t.term}</td><td className="px-2 py-2 text-xs text-gray-400 max-w-[90px] truncate">{t.campaign||"-"}</td><td className="px-2 py-2 text-xs text-gray-400 max-w-[90px] truncate">{t.adGroup||"-"}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.clicks,"num")}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.impressions,"num")}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.cost,"currency")}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.conversions,"num")}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.ctr,"pct")}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.cpa,"currency")}</td><td className="px-2 py-2 text-gray-300 text-right">{fmt(t.roas,"roas")}</td><td className="px-2 py-2"><select value={t.bucket} onChange={e=>updateTerm(t.id,"bucket",e.target.value)} className={`text-xs rounded px-1.5 py-0.5 font-medium border-0 outline-none cursor-pointer ${BUCKET_COLORS[t.bucket]}`} style={{background:"transparent"}}>{BUCKETS.map(b=><option key={b} value={b} style={{background:"#1f2937",color:"white"}}>{b}</option>)}</select></td><td className="px-2 py-2"><div className="text-xs text-gray-400 leading-tight"><div className="truncate max-w-[75px]">{t.practiceArea||"-"}</div>{t.practiceFocus&&<div className="truncate max-w-[75px] text-indigo-400">{t.practiceFocus}</div>}</div></td><td className="px-2 py-2"><div className="flex items-center gap-1">{t.confidence&&(<span className={`text-xs font-bold cursor-help ${CONFIDENCE_COLORS[t.confidence]||"text-gray-500"}`} onMouseEnter={e=>setTooltip({visible:true,text:t.scoreReason||"No reason recorded",x:e.clientX,y:e.clientY})} onMouseLeave={()=>setTooltip({visible:false,text:"",x:0,y:0})}>{t.confidence[0]}</span>)}<button onClick={()=>{updateTerm(t.id,"bucket","Unassigned");setTimeout(()=>runAIScore({...t,bucket:"Unassigned"}),100);}} disabled={scoringTermId===t.id} className={`text-xs px-1 py-0.5 rounded ${scoringTermId===t.id?"bg-indigo-900 text-indigo-400":"bg-gray-800 text-gray-500 hover:text-indigo-300"}`}>{scoringTermId===t.id?"…":"↺"}</button></div></td><td className="px-2 py-2"><div className="flex gap-1"><button onClick={()=>updateTerm(t.id,"flagBidUp",!t.flagBidUp)} className={`text-xs px-1 py-0.5 rounded ${t.flagBidUp?"bg-emerald-700 text-emerald-200":"bg-gray-800 text-gray-500 hover:text-gray-300"}`}>↑</button><button onClick={()=>updateTerm(t.id,"flagPushExact",!t.flagPushExact)} className={`text-xs px-1 py-0.5 rounded ${t.flagPushExact?"bg-indigo-700 text-indigo-200":"bg-gray-800 text-gray-500 hover:text-gray-300"}`}>[e]</button><button onClick={()=>updateTerm(t.id,"flagClone",!t.flagClone)} className={`text-xs px-1 py-0.5 rounded ${t.flagClone?"bg-blue-700 text-blue-200":"bg-gray-800 text-gray-500 hover:text-gray-300"}`}>⊕</button></div></td><td className="px-2 py-2"><button onClick={()=>deleteTerm(t.id)} className="text-gray-600 hover:text-red-400 text-xs">✕</button></td></tr>))}</tbody>
+              </table>
+            </div>
+          )}
+        </div>)}
+
+        {tab==="import"&&(<div className="max-w-3xl"><h2 className="text-base font-semibold mb-1">Import into <span className="text-indigo-400">{activeClient.name}</span></h2>{activeClient.serviceArea?<p className="text-sm text-gray-400 mb-1">Service area: <span className="text-emerald-400">{activeClient.serviceArea}</span>. Geographic Mismatch scoring is active.</p>:<p className="text-sm text-yellow-500 mb-1">No service area set. Geographic Mismatch scoring is off.</p>}<p className="text-sm text-gray-400 mb-4">Paste tab-separated data, then map each ad group to a practice focus.</p><textarea value={pasteRaw} onChange={e=>setPasteRaw(e.target.value)} rows={12} placeholder="Paste tab-separated data here (with header row)..." className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white font-mono placeholder-gray-600 resize-y"/>{pasteError&&<p className="text-red-400 text-sm mt-2">{pasteError}</p>}<div className="flex gap-3 mt-3"><button onClick={handlePaste} className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded font-medium">Next: Map Ad Groups</button><button onClick={()=>{setPasteRaw("");setPasteError("");}} className="bg-gray-700 hover:bg-gray-600 text-white text-sm px-4 py-2 rounded">Clear</button></div></div>)}
+
+        {tab==="export"&&(<div className="max-w-2xl"><h2 className="text-base font-semibold mb-4">Export from <span className="text-indigo-400">{activeClient.name}</span></h2><div className="flex flex-wrap gap-3 mb-4"><div><label className="text-xs text-gray-400 block mb-1">Buckets to Export</label><div className="flex flex-wrap gap-1">{BUCKETS.filter(b=>b!=="Unassigned").map(b=>(<button key={b} onClick={()=>setExportBuckets(prev=>prev.includes(b)?prev.filter(x=>x!==b):[...prev,b])} className={`text-xs px-2 py-1 rounded border transition-colors ${exportBuckets.includes(b)?BUCKET_COLORS[b]:"bg-gray-800 border-gray-700 text-gray-400 hover:text-white"}`}>{b}</button>))}</div></div><div className="flex gap-3 flex-wrap"><div><label className="text-xs text-gray-400 block mb-1">Group By</label><select value={exportGroupBy} onChange={e=>setExportGroupBy(e.target.value)} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white"><option value="adGroup">Campaign + Ad Group</option><option value="campaign">Campaign Only</option></select></div><div><label className="text-xs text-gray-400 block mb-1">Filter Campaign</label><select value={exportCampaign} onChange={e=>setExportCampaign(e.target.value)} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white max-w-[180px]">{exportCampaigns.map(c=><option key={c}>{c}</option>)}</select></div><div><label className="text-xs text-gray-400 block mb-1">Match Type</label><select value={exportMatchType} onChange={e=>setExportMatchType(e.target.value)} className="bg-gray-800 border border-gray-700 rounded px-3 py-1.5 text-sm text-white"><option>Exact</option><option>Phrase</option><option>Broad</option></select></div></div></div><div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-3"><div className="flex justify-between items-center mb-3"><span className="text-xs text-gray-400">{Object.values(exportGroups).flat().length} terms across {Object.keys(exportGroups).length} groups</span><div className="flex gap-2"><button onClick={()=>{navigator.clipboard.writeText(exportText);setCopied(true);setTimeout(()=>setCopied(false),2000);}} className={`text-xs px-3 py-1 rounded font-medium transition-colors ${copied?"bg-emerald-700 text-emerald-200":"bg-gray-700 hover:bg-gray-600 text-white"}`}>{copied?"Copied!":"Copy"}</button><button onClick={()=>downloadFile(exportText,`${activeClient.name.replace(/\s+/g,"-")}-export.txt`)} className="text-xs px-3 py-1 rounded font-medium bg-gray-700 hover:bg-gray-600 text-white">.txt</button><button onClick={()=>downloadFile(buildCSV(Object.values(exportGroups).flat()),`${activeClient.name.replace(/\s+/g,"-")}-export.csv`)} className="text-xs px-3 py-1 rounded font-medium bg-emerald-700 hover:bg-emerald-600 text-white">.csv</button></div></div>{Object.keys(exportGroups).length===0?(<p className="text-xs text-gray-500">No terms match this selection.</p>):(<div className="space-y-4 max-h-96 overflow-y-auto">{Object.entries(exportGroups).map(([group,ts])=>(<div key={group}><p className="text-xs font-semibold text-indigo-400 mb-1">{group}</p><pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">{ts.map(t=>formatKw(t.term,exportMatchType)).join("\n")}</pre></div>))}</div>)}</div></div>)}
+
+        {tab==="settings"&&(<div className="max-w-lg"><h2 className="text-base font-semibold mb-4">Settings</h2><div className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-4 mb-4 space-y-3"><p className="text-xs font-semibold text-gray-400">BUCKET DEFINITIONS</p>{BUCKETS.filter(b=>b!=="Unassigned").map(b=>(<div key={b} className="flex gap-2"><span className={`text-xs px-2 py-0.5 rounded border whitespace-nowrap self-start ${BUCKET_COLORS[b]}`}>{b}</span><p className="text-xs text-gray-400">{BUCKET_DESC[b]}</p></div>))}</div></div>)}
       </div>
-    </a>
+    </div>
+  );
+}
 
-  </div>
-
-  <p class="section-label">Google Ads</p>
-  <div class="tools-grid">
-
-    <a class="tool-card disabled" href="#">
-      <div class="card-top">
-        <div class="card-icon" style="background:rgba(239,159,39,0.1)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#EF9F27" stroke-width="1.5"/><path d="m21 21-4-4" stroke="#EF9F27" stroke-width="1.5" stroke-linecap="round"/></svg>
-        </div>
-        <span class="card-badge badge-wip">In progress</span>
-      </div>
-      <div>
-        <p class="card-name">Keyword Triage Tool</p>
-        <p class="card-client">Tompkins PPC · Legal clients</p>
-      </div>
-      <p class="card-desc">10-bucket keyword classification system with per-client configuration and contingency fee logic.</p>
-      <div class="card-meta">
-        <span class="meta-dot" style="background:var(--orange)"></span>
-        Claude API · per-client config
-      </div>
-    </a>
-
-  </div>
-
-  <p class="section-label">Coming soon</p>
-  <div class="tools-grid">
-
-    <a class="tool-card disabled" href="#">
-      <div class="card-top">
-        <div class="card-icon" style="background:rgba(55,138,221,0.1)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18" stroke="#378ADD" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </div>
-        <span class="card-badge badge-soon">Planned</span>
-      </div>
-      <div>
-        <p class="card-name">Wiper Blade Fitment Lookup</p>
-        <p class="card-client">Wexco · WiperExpress</p>
-      </div>
-      <p class="card-desc">Customer-facing fitment and cross-reference tool. Year / make / model lookup with blade size output.</p>
-      <div class="card-meta">
-        <span class="meta-dot" style="background:var(--blue)"></span>
-        Supabase · Vercel · in architecture
-      </div>
-    </a>
-
-  </div>
-
-</div>
-
-<div class="footer">
-  <span class="footer-txt">Jorgensen Strategy &amp; Ops LLC · Internal use</span>
-  <span class="footer-txt" id="ts"></span>
-</div>
-
-<script>
-  document.getElementById('ts').textContent = new Date().getFullYear();
+// ── mount ──────────────────────────────────────────────────────────────────
+document.getElementById('loading').style.display = 'none';
+document.getElementById('root').style.display = 'block';
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
 </script>
-
 </body>
 </html>
